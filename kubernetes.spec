@@ -21,7 +21,7 @@
 # https://github.com/kubernetes/kubernetes
 %global provider_prefix	%{provider}.%{provider_tld}/%{project}/%{repo}
 %global import_path     k8s.io/kubernetes
-%global commit		82450d03cb057bab0950214ef122b67c83fb11df
+%global commit		08e099554f3c31f6e6f07b448ab3ed78d0520507
 %global shortcommit	%(c=%{commit}; echo ${c:0:7})
 
 %global con_provider        github
@@ -33,7 +33,7 @@
 %global con_commit      17c9a8df1be43378b0026dc22f6000a3e9952a18
 %global con_shortcommit %(c=%{con_commit}; echo ${c:0:7})
 
-%global kube_version          1.5.1
+%global kube_version          1.5.2
 %global kube_git_version      v%{kube_version}
 
 #I really need this, otherwise "version_ldflags=$(kube::version_ldflags)"
@@ -43,7 +43,7 @@
 
 Name:		kubernetes
 Version:	%{kube_version}
-Release:	1
+Release:	2%{?dist}
 Summary:        Container cluster management
 License:        ASL 2.0
 URL:            %{import_path}
@@ -69,6 +69,9 @@ Patch17:        Hyperkube-remove-federation-cmds.patch
 Patch16:        fix-support-for-ppc64le.patch
 
 Patch18:        get-rid-of-the-git-commands-in-mungedocs.patch
+
+# resolves: bz1413997
+Patch19:        fix-rootScopeNaming-generate-selfLink-issue-37686.patch
 
 # It obsoletes cadvisor but needs its source code (literally integrated)
 Obsoletes:      cadvisor
@@ -879,6 +882,8 @@ mv $(ls | grep -v "^src$") src/k8s.io/kubernetes/.
 %patch16 -p1
 %endif
 
+%patch19 -p1
+
 %build
 pushd src/k8s.io/kubernetes/
 export KUBE_GIT_TREE_STATE="clean"
@@ -899,13 +904,15 @@ pushd admin
 cp kube-apiserver.md kube-controller-manager.md kube-proxy.md kube-scheduler.md kubelet.md ..
 popd
 cp %{SOURCE33} genmanpages.sh
-#bash genmanpages.sh
+bash genmanpages.sh
 popd
 popd
 
 %install
 pushd src/k8s.io/kubernetes/
-. hack/lib/init.sh kube::golang::setup_env
+sed -i 's!set -o nounset!!g' hack/lib/init.sh
+. hack/lib/init.sh
+kube::golang::setup_env
 
 %ifarch ppc64le
 output_path="_output/local/go/bin"
@@ -990,23 +997,46 @@ install -d -m 0755 %{buildroot}%{_sharedstatedir}/kubernetes-unit-test/
 # unit-tests needs source code
 # integration tests needs docs and other files
 # test-cmd.sh atm needs cluster, examples and other
-#cp -a src %{buildroot}%{_sharedstatedir}/kubernetes-unit-test/
-#rm -rf %{buildroot}%{_sharedstatedir}/kubernetes-unit-test/src/k8s.io/kubernetes/_output
-#cp -a *.md %{buildroot}%{_sharedstatedir}/kubernetes-unit-test/src/k8s.io/kubernetes/
+cp -a src %{buildroot}%{_sharedstatedir}/kubernetes-unit-test/
+rm -rf %{buildroot}%{_sharedstatedir}/kubernetes-unit-test/src/k8s.io/kubernetes/_output
+cp -a *.md %{buildroot}%{_sharedstatedir}/kubernetes-unit-test/src/k8s.io/kubernetes/
+
+#find %{buildroot} -name "*.gitignore" -delete
+find %{buildroot}/%{_var} -size  0 -delete
+
+%check
+# Fedora, RHEL7 and CentOS are tested via unit-test subpackage
+if [ 1 != 1 ]; then
+echo "******Testing the commands*****"
+hack/test-cmd.sh
+echo "******Benchmarking kube********"
+hack/benchmark-go.sh
+
+# In Fedora 20 and RHEL7 the go cover tools isn't available correctly
+%if 0%{?fedora} >= 21
+echo "******Testing the go code******"
+hack/test-go.sh
+echo "******Testing integration******"
+hack/test-integration.sh --use_go_build
+%endif
+fi
+
+#define license tag if not already defined
+%{!?_licensedir:%global license %doc}
 
 %files
 # empty as it depends on master and node
 
 %files master
-%doc LICENSE
+%license LICENSE
 %doc *.md
 %{_mandir}/man1/kube-apiserver.1*
 %{_mandir}/man1/kube-controller-manager.1*
 %{_mandir}/man1/kube-scheduler.1*
-%attr(754, -, kube) %caps(cap_net_bind_service=ep) %{_bindir}/kube-apiserver
+#%attr(754, -, kube) %caps(cap_net_bind_service=ep) %{_bindir}/kube-apiserver
+%attr(754, -, kube) %{_bindir}/kube-apiserver
 %{_bindir}/kube-controller-manager
 %{_bindir}/kube-scheduler
-%{_bindir}/hyperkube
 %{_unitdir}/kube-apiserver.service
 %{_unitdir}/kube-controller-manager.service
 %{_unitdir}/kube-scheduler.service
@@ -1019,26 +1049,22 @@ install -d -m 0755 %{buildroot}%{_sharedstatedir}/kubernetes-unit-test/
 %verify(not size mtime md5) %attr(755, kube,kube) %dir /run/%{name}
 
 %files node
-%doc LICENSE
+%license LICENSE
 %doc *.md
 %{_mandir}/man1/kubelet.1*
 %{_mandir}/man1/kube-proxy.1*
 %{_bindir}/kubelet
 %{_bindir}/kube-proxy
-%{_bindir}/hyperkube
 %{_unitdir}/kube-proxy.service
 %{_unitdir}/kubelet.service
 %dir %{_sharedstatedir}/kubelet
-%dir %{_sysconfdir}/%{name}
-%config(noreplace) %{_sysconfdir}/%{name}/config
 %config(noreplace) %{_sysconfdir}/%{name}/kubelet
 %config(noreplace) %{_sysconfdir}/%{name}/proxy
 %config(noreplace) %{_sysconfdir}/systemd/system.conf.d/kubernetes-accounting.conf
-%{_tmpfilesdir}/kubernetes.conf
 %verify(not size mtime md5) %attr(755, kube,kube) %dir /run/%{name}
 
 %files client
-%doc LICENSE
+%license LICENSE
 %doc *.md
 %{_mandir}/man1/kubectl.1*
 %{_mandir}/man1/kubectl-*
@@ -1068,6 +1094,7 @@ getent passwd kube >/dev/null || useradd -r -g kube -d / -s /sbin/nologin \
 
 %postun master
 %systemd_postun
+
 
 %pre node
 getent group kube >/dev/null || groupadd -r kube
