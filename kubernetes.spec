@@ -43,11 +43,11 @@
 
 Name:		kubernetes
 Version:	%{kube_version}
-Release:	2%{?dist}
+Release:	1
 Summary:        Container cluster management
 License:        ASL 2.0
 URL:            %{import_path}
-ExclusiveArch:  x86_64 aarch64 ppc64le
+ExclusiveArch:  x86_64 %{armx} ppc64le
 Source0:        https://%{provider_prefix}/archive/%{commit}/%{repo}-%{shortcommit}.tar.gz
 Source1:        https://%{con_provider_prefix}/archive/%{con_commit}/%{con_repo}-%{con_shortcommit}.tar.gz
 Source3:        kubernetes-accounting.conf
@@ -1092,10 +1092,6 @@ getent passwd kube >/dev/null || useradd -r -g kube -d / -s /sbin/nologin \
 %preun master
 %systemd_preun kube-apiserver kube-scheduler kube-controller-manager
 
-%postun master
-%systemd_postun
-
-
 %pre node
 getent group kube >/dev/null || groupadd -r kube
 getent passwd kube >/dev/null || useradd -r -g kube -d / -s /sbin/nologin \
@@ -1110,6 +1106,3 @@ fi
 
 %preun node
 %systemd_preun kubelet kube-proxy
-
-%postun node
-%systemd_postun
