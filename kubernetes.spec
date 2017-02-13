@@ -53,6 +53,7 @@ Source1:        https://%{con_provider_prefix}/archive/%{con_commit}/%{con_repo}
 Source3:        kubernetes-accounting.conf
 
 Source33:       genmanpages.sh
+Source100:	kubernetes.rpmlintrc
 Patch2:         Change-etcd-server-port.patch
 Patch3:         build-with-debug-info.patch
 
