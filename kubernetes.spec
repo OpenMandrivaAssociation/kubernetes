@@ -43,7 +43,7 @@
 
 Name:		kubernetes
 Version:	%{kube_version}
-Release:	1
+Release:	2
 Summary:        Container cluster management
 License:        ASL 2.0
 URL:            %{import_path}
