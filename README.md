@@ -13,4 +13,4 @@ Kubernetes releases are tracked at https://kubernetes.io/releases/ and is the ca
 | 1.23 EOL | COPR EOL | 2023.02.28 | ~~1.17~~ 1.19 |
 | 1.22 EOL | F35 EOL | 2022.10.28 | 1.16 |
 
-Additional Kubernetes rpms are available in this COPR repository: https://copr.fedorainfracloud.org/coprs/buckaroogeek/copr-k8s/. The COPR repository provides rpms of Kubernetes 1.26, 1.25, and 1.24 for Fedora 37, 38, and rawhide. If the golang "built-with" version for Kubernetes is the same as or older than the golang release in Fedora, then there should be an rpm available in COPR.
+Additional Kubernetes rpms are available in this COPR repository: https://copr.fedorainfracloud.org/coprs/buckaroogeek/copr-k8s/. The COPR repository provides rpms of Kubernetes 1.27, 1.26, 1.25, and 1.24 for Fedora 37, 38, and rawhide. If the golang "built-with" version for Kubernetes is the same as or older than the golang release in Fedora, then there should be an rpm available in COPR.
