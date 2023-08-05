@@ -25,12 +25,11 @@
 ##############################################
 Name:           kubernetes
 Version:        1.27.4
-Release:        %autorelease
+Release:        1
 Summary:        Open Source Production-Grade Container Scheduling And Management Platform
 License:        ASL 2.0
-URL:            https://%{import_path}
-ExclusiveArch:  x86_64 aarch64 ppc64le s390x %{arm}
-Source0:        https://%{provider_prefix}/archive/%{commit}/%{repo}-%{shortcommit}.tar.gz
+URL:            https://kubernetes.io/
+Source0:        https://github.com/kubernetes/kubernetes/archive/%{commit}/%{repo}-%{shortcommit}.tar.gz
 
 Source101:      kube-proxy.service
 Source102:      kube-apiserver.service
@@ -111,9 +110,6 @@ Kubernetes services for worker node host
 %package  kubeadm
 Summary:  Kubernetes tool for standing up clusters
 Requires: kubernetes-node = %{version}-%{release}
-
-Requires: containernetworking-plugins
-Requires: cri-tools
 
 %description kubeadm
 Kubernetes tool for standing up clusters
@@ -279,6 +275,10 @@ mv src/k8s.io/kubernetes/LICENSE .
 # change log. no need to include generated rpms
 rm CHANGELOG.md
 
+# Don't fall over unbound variables in spec-helper
+# it's a problem here because of _buildshell
+set +u
+
 %check
 if [ 1 != 1 ]; then
 echo "******Testing the commands*****"
@@ -365,7 +365,7 @@ fi
 ##############################################
 
 %pre master
-%sysusers_create_compat %{SOURCE116}
+%sysusers_create_package %{name} %{SOURCE116}
 
 %post master
 %systemd_post kube-apiserver kube-scheduler kube-controller-manager
@@ -378,7 +378,7 @@ fi
 
 
 %pre node
-%sysusers_create_compat %{SOURCE116}
+%sysusers_create_package %{name} %{SOURCE116}
 
 %post node
 %systemd_post kubelet kube-proxy
@@ -392,7 +392,3 @@ fi
 
 %postun node
 %systemd_postun kubelet kube-proxy
-
-############################################
-%changelog
-%autochangelog
