@@ -24,7 +24,7 @@
 
 ##############################################
 Name:           kubernetes
-Version:        1.29.1
+Version:        1.29.2
 Release:        1
 Summary:        Open Source Production-Grade Container Scheduling And Management Platform
 License:        ASL 2.0
