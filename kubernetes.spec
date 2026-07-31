@@ -24,7 +24,7 @@
 
 ##############################################
 Name:           kubernetes
-Version:        1.31.3
+Version:        1.36.3
 Release:        1
 Summary:        Open Source Production-Grade Container Scheduling And Management Platform
 License:        ASL 2.0
@@ -128,7 +128,7 @@ Kubernetes client tools like kubectl
 ##############################################
 
 %prep
-%setup -q -n %{repo}-%{commit}
+%setup -q -n kubernetes-fa3d7990104d7c1f16943a67f11b154b71f6a132
 
 %if 0%{?with_debug}
 %patch3 -p1
